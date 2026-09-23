@@ -1,3 +1,4 @@
+Berikut ialah kod lengkap bagi index.html yang telah dikemaskini dengan integrasi pustaka html2pdf.js, automasi paparan invois rasmi sebaik sahaja deposit disahkan, serta butang muat turun PDF secara terus:
 <!DOCTYPE html>
 <html lang="ms" class="scroll-smooth dark">
 <head>
@@ -16,6 +17,9 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- html2pdf.js CDN (Penjana PDF Automatik) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -93,6 +97,12 @@
             border: 1px solid rgba(16, 185, 129, 0.4);
         }
 
+        .badge-paidfull {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
         .badge-cancelled {
             background: rgba(239, 68, 68, 0.15);
             color: #f87171;
@@ -119,6 +129,31 @@
             background: #ffffff;
             border: 2px solid #d4af37;
             box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Print Styling for Official Printable Invoice Receipt */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printableReceiptArea, #printableReceiptArea * {
+                visibility: visible !important;
+            }
+            #printableReceiptArea {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                background: #ffffff !important;
+                color: #111827 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -189,7 +224,7 @@
                     Buffet Ramadan KJ Lab Coffee
                 </h2>
                 <p class="font-garamond italic text-xl md:text-2xl text-gold">
-                    "Pilih Meja Anda • Pegangan Pre-Book 6 Jam • Sync Google Sheet Automatic"
+                    "Pilih Meja Anda • Muat Naik Resit • Jana Invois Rasmi Automatik"
                 </p>
                 <p class="text-gray-300 text-xs sm:text-sm max-w-2xl mx-auto">
                     Nikmati juadah sajian Ramadan berkonsepkan buffet serba lengkap beserta sajian kopi segar khas KJ Lab Coffee Banting.
@@ -484,14 +519,14 @@
                                 </div>
                             </div>
 
-                            <!-- Validation Warning -->
+                            <!-- Validation Warning Box -->
                             <div id="bookingFormError" class="hidden p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[11px] leading-snug flex items-center gap-2">
-                                <i class="fa-solid fa-circle-exclamation text-rose-400 text-sm"></i>
+                                <i class="fa-solid fa-circle-exclamation text-rose-400 text-sm flex-shrink-0"></i>
                                 <span id="bookingFormErrorText">Sila lengkapkan semua butiran.</span>
                             </div>
 
-                            <!-- CTA Button -->
-                            <button type="button" onclick="handlePreBookSubmission()" class="w-full btn-gold font-extrabold py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 mt-2">
+                            <!-- Pre-Book Submit CTA Button -->
+                            <button type="button" id="btnSubmitPrebook" onclick="handlePreBookSubmission()" class="w-full btn-gold font-extrabold py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 mt-2 cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">
                                 <i class="fa-brands fa-whatsapp text-lg"></i>
                                 <span>Hantar Pre-Book ke WhatsApp</span>
                             </button>
@@ -514,7 +549,7 @@
                     <img src="Gemini_Generated_Image_ki36a8ki36a8ki36.jpg" alt="Logo KJ Lab Coffee" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h2 class="font-fraunces text-2xl md:text-3xl font-bold text-white">Semak Status Tempahan Ramadan 2027</h2>
+                    <h2 class="font-fraunces text-2xl md:text-3xl font-bold text-white">Semak Status & Muat Naik Resit</h2>
                     <p class="text-xs text-gray-300 mt-1">Masukkan Kod Rujukan Pre-Book (Cth: KJL-2027-8492) atau Nombor WhatsApp anda</p>
                 </div>
 
@@ -547,7 +582,7 @@
                             <h2 class="font-fraunces font-bold text-xl md:text-2xl text-gold">Panel Admin KJ Lab Coffee</h2>
                             <span class="bg-amber-500 text-emeraldDark text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Pengurusan System</span>
                         </div>
-                        <p class="text-xs text-gray-300">Pengesahan bayaran deposit 6 jam, integrasi Google Sheet, dan penguncian kata laluan.</p>
+                        <p class="text-xs text-gray-300">Pengesahan bayaran deposit, semakan resit imej, penjanaan invois PDF & sync Google Sheet.</p>
                     </div>
                 </div>
 
@@ -681,13 +716,13 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-gold">
+                <div class="glass-card p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-blue-400">
                     <div>
-                        <p class="text-[10px] uppercase font-bold text-gray-400">Anggaran Deposit</p>
-                        <h4 id="adminStatDeposit" class="font-fraunces text-xl font-black text-gold">RM 0</h4>
+                        <p class="text-[10px] uppercase font-bold text-blue-300">Lunas / Paid Full</p>
+                        <h4 id="adminStatPaidFull" class="font-fraunces text-2xl font-black text-blue-400">0</h4>
                     </div>
-                    <div class="w-10 h-10 rounded-xl bg-gold/10 text-gold flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-vault"></i>
+                    <div class="w-10 h-10 rounded-xl bg-blue-400/10 text-blue-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-circle-check"></i>
                     </div>
                 </div>
             </div>
@@ -697,9 +732,9 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gold/20">
                     <div>
                         <h3 class="font-fraunces font-bold text-xl text-gold flex items-center gap-2">
-                            <i class="fa-solid fa-user-shield"></i> Senarai Permohonan Tempahan
+                            <i class="fa-solid fa-user-shield"></i> Senarai Permohonan & Resit Bayaran
                         </h3>
-                        <p class="text-xs text-gray-300">Pengesahan bayaran deposit 6 jam, status meja, dan pemindahan data Google Sheet</p>
+                        <p class="text-xs text-gray-300">Pengesahan bayaran deposit 6 jam, semakan resit imej, dan penjanaan invois PDF</p>
                     </div>
 
                     <!-- Filter Controls -->
@@ -708,13 +743,16 @@
                             Semua
                         </button>
                         <button onclick="setAdminFilter('PRE_BOOKED')" id="filterBtnPrebook" class="px-3 py-1.5 rounded-lg border border-gold/20 bg-emeraldDark text-amber-300 font-medium">
-                            <i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i> Pre-Book (6 Jam)
+                            <i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i> Pre-Book
                         </button>
                         <button onclick="setAdminFilter('CONFIRMED')" id="filterBtnConfirmed" class="px-3 py-1.5 rounded-lg border border-gold/20 bg-emeraldDark text-emerald-400 font-medium">
                             <i class="fa-solid fa-check text-[10px] mr-1"></i> Disahkan
                         </button>
+                        <button onclick="setAdminFilter('PAID_FULL')" id="filterBtnPaidFull" class="px-3 py-1.5 rounded-lg border border-gold/20 bg-emeraldDark text-blue-400 font-medium">
+                            <i class="fa-solid fa-circle-dollar-to-slot text-[10px] mr-1"></i> Lunas
+                        </button>
                         <button onclick="setAdminFilter('CANCELLED')" id="filterBtnCancelled" class="px-3 py-1.5 rounded-lg border border-gold/20 bg-emeraldDark text-rose-400 font-medium">
-                            Batal / Tamat
+                            Batal
                         </button>
                     </div>
                 </div>
@@ -728,7 +766,7 @@
                                 <th class="p-3">Tarikh Ramadan 2027</th>
                                 <th class="p-3">No. Meja</th>
                                 <th class="p-3">Pax & Bayaran</th>
-                                <th class="p-3">Status / Masa Baki 6 Jam</th>
+                                <th class="p-3">Status Resit</th>
                                 <th class="p-3 text-right">Tindakan Admin</th>
                             </tr>
                         </thead>
@@ -742,7 +780,7 @@
 
     </main>
 
-    <!-- MODAL 0: ADMIN AUTHENTICATION / PASSWORD PROTECTION MODAL (HINT REMOVED) -->
+    <!-- MODAL 0: ADMIN AUTHENTICATION MODAL -->
     <div id="adminAuthModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card max-w-md w-full p-6 md:p-8 rounded-3xl border-2 border-gold space-y-5 text-center relative shadow-2xl">
             <button onclick="closeAdminAuthModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-emeraldDark text-gold hover:bg-gold hover:text-emeraldDark transition-all flex items-center justify-center">
@@ -780,7 +818,7 @@
         </div>
     </div>
 
-    <!-- MODAL 1: PRE-BOOK SUCCESS & 6-HOUR TIMER MODAL FOR CUSTOMER WITH BRAND LOGO -->
+    <!-- MODAL 1: PRE-BOOK SUCCESS & RECEIPT UPLOAD MODAL -->
     <div id="prebookModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="glass-card max-w-lg w-full p-6 md:p-8 rounded-3xl border-2 border-gold space-y-5 relative my-8 shadow-2xl">
             <button onclick="closePrebookModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-emeraldDark text-gold hover:bg-gold hover:text-emeraldDark transition-all flex items-center justify-center">
@@ -834,6 +872,21 @@
                 </div>
             </div>
 
+            <!-- RUANGAN MUAT NAIK RESIT BUKTI BAYARAN -->
+            <div class="bg-emeraldDark/90 p-4 rounded-2xl border border-gold/30 space-y-2 text-xs">
+                <label class="block font-bold text-gold uppercase tracking-wider">
+                    <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Muat Naik Bukti Pembayaran / Resit Bank
+                </label>
+                <p class="text-[10px] text-gray-300">Selepas membuat bayaran deposit, sila muat naik imej resit bank di sini untuk semakan automatik admin.</p>
+                
+                <input type="file" id="modalReceiptInput" accept="image/*" onchange="handleModalReceiptUpload(this)" class="block w-full text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-gold file:text-emeraldDark hover:file:bg-gold-light cursor-pointer">
+                
+                <div id="modalReceiptStatusPreview" class="hidden p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                    <span id="modalReceiptFileName">Resit telah dimuat naik.</span>
+                </div>
+            </div>
+
             <div class="space-y-2">
                 <button onclick="openWhatsAppForDeposit()" class="w-full btn-gold font-bold py-3.5 rounded-xl text-xs uppercase flex items-center justify-center space-x-2">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
@@ -872,7 +925,181 @@
         </div>
     </div>
 
-    <!-- MODAL 3: GOOGLE APPS SCRIPT SETUP GUIDE MODAL -->
+    <!-- MODAL 3: ADMIN RECEIPT IMAGE INSPECTION MODAL -->
+    <div id="adminReceiptViewModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-card max-w-2xl w-full p-6 rounded-3xl border-2 border-gold space-y-4 relative my-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gold/30">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice-dollar text-gold text-lg"></i>
+                    <h3 class="font-fraunces font-bold text-lg text-gold">Pratonton Bukti Pembayaran / Resit</h3>
+                </div>
+                <button onclick="closeAdminReceiptModal()" class="w-8 h-8 rounded-full bg-emeraldDark text-gold hover:bg-gold hover:text-emeraldDark transition-all flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-black/80 p-3 rounded-2xl border border-gold/20 flex items-center justify-center max-h-[60vh] overflow-hidden">
+                <img id="adminReceiptImgPreview" src="" alt="Resit Bayaran" class="max-h-[55vh] w-auto object-contain rounded-lg">
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-2">
+                <span id="adminReceiptInfoText" class="text-gray-300 font-medium">--</span>
+                
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <a id="adminReceiptDownloadBtn" href="#" download="Resit_Bayaran.jpg" class="btn-gold px-5 py-2.5 rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Muat Turun Resit</span>
+                    </a>
+                    <button onclick="closeAdminReceiptModal()" class="bg-emeraldDark hover:bg-emeraldBase border border-gold/30 text-gray-300 px-4 py-2.5 rounded-xl font-bold">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: OFFICIAL PRINTABLE RECEIPT / INVOICE MODAL (PDF / PRINT READY) -->
+    <div id="officialReceiptModal" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-card max-w-2xl w-full p-6 md:p-8 rounded-3xl border-2 border-gold space-y-6 relative my-8 max-h-[92vh] overflow-y-auto shadow-2xl">
+            
+            <button onclick="closeOfficialReceiptModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-emeraldDark text-gold hover:bg-gold hover:text-emeraldDark transition-all flex items-center justify-center no-print">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- PRINTABLE RECEIPT CONTAINER AREA -->
+            <div id="printableReceiptArea" class="bg-white text-gray-900 p-6 md:p-8 rounded-2xl border border-gold/40 shadow-inner space-y-6 font-jost">
+                
+                <!-- Receipt Header -->
+                <div class="flex flex-col sm:flex-row items-center justify-between border-b-2 border-gold/40 pb-4 gap-4">
+                    <div class="flex items-center space-x-3 text-center sm:text-left">
+                        <div class="w-16 h-16 rounded-2xl bg-emeraldDark p-1 border-2 border-gold flex-shrink-0 shadow">
+                            <img src="Gemini_Generated_Image_ki36a8ki36a8ki36.jpg" alt="Logo KJ Lab Coffee" class="w-full h-full object-contain rounded-xl">
+                        </div>
+                        <div>
+                            <h2 class="font-fraunces font-extrabold text-xl text-emeraldDark tracking-wider">KJ LAB COFFEE BANTING</h2>
+                            <p class="text-[10px] text-gray-600">No. 12, Jalan Sultan Alam Shah, Banting, Selangor</p>
+                            <p class="text-[10px] text-gray-600">Tel / WhatsApp: +60 12-345 6789</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center sm:text-right">
+                        <span id="rcptStatusBadge" class="inline-block bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mb-1">
+                            LUNAS SEPENUHNYA
+                        </span>
+                        <h3 class="font-fraunces font-black text-2xl text-gold-dark" id="rcptInvoiceNo">INV-KJL-2027-8492</h3>
+                        <p class="text-[10px] text-gray-500">Tarikh Resit: <span id="rcptIssueDate">9 Feb 2027</span></p>
+                    </div>
+                </div>
+
+                <!-- Customer Details Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">Nama Pelanggan</span>
+                        <span id="rcptCustName" class="font-bold text-gray-900">Encik Kamarul</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">No. WhatsApp</span>
+                        <span id="rcptCustPhone" class="font-bold text-gray-900">0129876543</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">Kod Ref Tempahan</span>
+                        <span id="rcptRefCode" class="font-mono font-bold text-emerald-800">KJL-2027-8492</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">Tarikh Ramadan 2027</span>
+                        <span id="rcptRamadanDate" class="font-bold text-gray-900">Hari 1 Ramadan (8 Feb 2027)</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">No. Meja Ditetapkan</span>
+                        <span id="rcptTableNo" class="font-bold text-emerald-800">Meja B01 (6 Pax)</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block">Masa Ketibaan</span>
+                        <span id="rcptArrivalTime" class="font-bold text-gray-900">6:30 PM</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-gray-300 text-gray-700 font-bold uppercase bg-gray-100">
+                                <th class="p-2.5">Perkara / Kategori Pax</th>
+                                <th class="p-2.5 text-center">Kuantiti (Pax)</th>
+                                <th class="p-2.5 text-right">Harga Unit</th>
+                                <th class="p-2.5 text-right">Jumlah (RM)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcptTableItemsBody" class="divide-y divide-gray-200">
+                            <!-- Dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Total & Balance Calculation Summary Box -->
+                <div class="border-t-2 border-gold/40 pt-3 flex flex-col sm:flex-row justify-between items-end gap-4 text-xs">
+                    <div class="text-[11px] text-gray-600 space-y-1">
+                        <p><i class="fa-solid fa-circle-info text-gold mr-1"></i> Resit rasmi ini dihasilkan oleh sistem e-Tempahan Buffet Ramadan KJ Lab Coffee.</p>
+                        <p><i class="fa-solid fa-shield-check text-emerald-600 mr-1"></i> Pengesahan digital disahkan oleh Pentadbir KJ Lab Coffee Banting.</p>
+                    </div>
+
+                    <div class="w-full sm:w-64 space-y-1.5 text-right bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Jumlah Keseluruhan:</span>
+                            <span id="rcptGrandTotal" class="font-bold text-gray-900">RM 442.00</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-700">
+                            <span>Deposit Dibayar:</span>
+                            <span id="rcptDepositPaid" class="font-bold">- RM 120.00</span>
+                        </div>
+                        <div class="flex justify-between text-base font-extrabold text-emerald-900 pt-1.5 border-t border-gray-300">
+                            <span>Baki Perlu Dijelaskan:</span>
+                            <span id="rcptBalanceDue" class="font-fraunces text-lg">RM 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digital Stamp & Footer Badge -->
+                <div class="flex items-center justify-between pt-2">
+                    <div class="text-[10px] text-gray-400">
+                        Dicetak pada: <span id="rcptPrintTimestamp">23 Sep 2026, 3:42 PM</span>
+                    </div>
+
+                    <div class="border-2 border-emerald-600 px-4 py-1.5 rounded-xl text-center rotate-[-2deg] opacity-80">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-widest block">KJ LAB COFFEE BANTING</span>
+                        <span class="text-[9px] font-black text-emerald-900 uppercase">OFFICIAL APPROVED RECEIPT</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons for Printing, PDF Download & Sharing -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-2 no-print">
+                <!-- Direct PDF Download Button -->
+                <button type="button" onclick="downloadReceiptPDF()" class="btn-gold font-extrabold py-3 px-5 rounded-xl uppercase flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+                    <i class="fa-solid fa-file-pdf text-base text-emeraldDark"></i>
+                    <span>Muat Turun Invois PDF</span>
+                </button>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="button" onclick="window.print()" class="bg-emeraldDark border border-gold/40 text-gold hover:bg-gold hover:text-emeraldDark font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Cetak</span>
+                    </button>
+                    <button type="button" onclick="shareOfficialReceiptWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button type="button" onclick="closeOfficialReceiptModal()" class="bg-emeraldDark border border-gold/30 text-gray-300 font-bold py-3 px-4 rounded-xl">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL 5: GOOGLE APPS SCRIPT SETUP GUIDE MODAL -->
     <div id="gasGuideModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="glass-card max-w-2xl w-full p-6 md:p-8 rounded-3xl border-2 border-gold space-y-4 relative my-8 max-h-[90vh] overflow-y-auto">
             <button onclick="closeGasGuideModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-emeraldDark text-gold hover:bg-gold hover:text-emeraldDark transition-all flex items-center justify-center">
@@ -884,16 +1111,16 @@
                     <i class="fa-solid fa-code"></i>
                 </div>
                 <div>
-                    <h3 class="font-fraunces font-bold text-xl text-gold">Panduan Setup Google Apps Script</h3>
-                    <p class="text-xs text-gray-300">Langkah untuk menghubungkan Google Sheet kedai anda</p>
+                    <h3 class="font-fraunces font-bold text-xl text-gold">Panduan Setup Google Apps Script (2 Sheets)</h3>
+                    <p class="text-xs text-gray-300">Automatik cipta Sheet 1 (Senarai Tempahan) & Sheet 2 (Ringkasan Bayaran & Resit Drive)</p>
                 </div>
             </div>
 
             <div class="space-y-3 text-xs text-gray-200">
                 <ol class="list-decimal pl-5 space-y-2 leading-relaxed">
-                    <li>Buka Google Sheets baharu di Google Drive anda (Namakan contoh: <strong>Tempahan Ramadan 2027 KJ Lab</strong>).</li>
+                    <li>Buka Google Sheets baharu di Google Drive anda.</li>
                     <li>Di menu atas, tekan <strong>Extensions (Peluasan)</strong> ➔ <strong>Apps Script</strong>.</li>
-                    <li>Padam semua kod sedia ada, dan <strong>Copy & Paste</strong> kod script di bawah:</li>
+                    <li>Padam semua kod sedia ada, dan <strong>Copy & Paste</strong> kod script Dwi-Sheet di bawah:</li>
                 </ol>
 
                 <!-- Code Container -->
@@ -903,65 +1130,132 @@
                     </button>
                     <pre id="gasScriptCodeBlock">function doPost(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     var data = JSON.parse(e.postData.contents);
     
-    // Auto-create Header if sheet empty
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Ref Code", "Tarikh Ramadan", "Nama Pelanggan", "No Phone", "No Meja", "Jumlah Pax", "Dewasa", "Kanak", "Warga", "Masa", "Jumlah RM", "Deposit RM", "Status", "Catatan", "Kemaskini Terakhir"]);
-      sheet.getRange(1, 1, 1, 15).setFontWeight("bold").setBackground("#103e31").setFontColor("#d4af37");
+    // --- SHEET 1: Senarai Tempahan ---
+    var sheet1 = ss.getSheetByName("Senarai Tempahan") || ss.insertSheet("Senarai Tempahan");
+    if (sheet1.getLastRow() === 0) {
+      sheet1.appendRow([
+        "Kod Rujukan", "Tarikh Ramadan", "Nama Pelanggan", "No. Phone", 
+        "No. Meja", "Jumlah Pax", "Dewasa", "Kanak-Kanak", "Warga Emas", 
+        "Masa", "Jumlah (RM)", "Deposit (RM)", "Status", "Catatan", "Masa Dicipta"
+      ]);
+      sheet1.getRange(1, 1, 1, 15).setFontWeight("bold").setBackground("#0d3b2e").setFontColor("#ffffff");
     }
     
-    // Check if refCode exists to update status
-    var rows = sheet.getDataRange().getValues();
-    var rowIndex = -1;
-    for (var i = 1; i < rows.length; i++) {
-      if (rows[i][0] === data.refCode) {
-        rowIndex = i + 1;
+    // --- SHEET 2: Ringkasan Bayaran & Resit ---
+    var sheet2 = ss.getSheetByName("Ringkasan Bayaran & Resit") || ss.insertSheet("Ringkasan Bayaran & Resit");
+    if (sheet2.getLastRow() === 0) {
+      sheet2.appendRow([
+        "Nama Pelanggan", "Kod Rujukan", "No. Phone", "Jumlah Bayaran (RM)", 
+        "Deposit Dibayar (RM)", "Baki Belum Dibayar (RM)", "Status Bayaran", 
+        "Bukti Pembayaran Deposit", "Bukti Pembayaran Penuh", "Tarikh Kemaskini"
+      ]);
+      sheet2.getRange(1, 1, 1, 10).setFontWeight("bold").setBackground("#d4af37").setFontColor("#ffffff");
+    }
+    
+    // Ekstrak Data
+    var refCode = String(data.refCode || "").trim();
+    var name = data.name || data.customerName || "";
+    var phone = data.phone || "";
+    var tableNo = data.tableNo || data.tableName || "";
+    var date = data.date || data.dateStr || "";
+    var pax = data.pax || data.totalPax || 0;
+    var adults = data.adults || data.dewasa || 0;
+    var children = data.children || data.kanak || 0;
+    var seniors = data.seniors || data.warga || 0;
+    var time = data.time || data.arrivalTime || "";
+    var totalPrice = Number(data.totalPrice || data.totalAmount || 0);
+    var deposit = Number(data.deposit || data.depositAmount || 0);
+    var status = String(data.status || "PRE-BOOKED").toUpperCase();
+    var notes = data.notes || "";
+    var createdAt = data.createdAt || new Date().toLocaleString();
+    
+    // 1. SIMPAN GAMBAR RESIT KE GOOGLE DRIVE & DAPATKAN LINK
+    var receiptLink = "Tiada Resit";
+    var base64Data = data.receiptBase64 || data.receiptDataUrl || data.receipt;
+    
+    if (base64Data && base64Data.indexOf("base64,") !== -1) {
+      try {
+        var folderName = "Resit Buffet Ramadan 2027";
+        var folders = DriveApp.getFoldersByName(folderName);
+        var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+        
+        var contentType = base64Data.substring(5, base64Data.indexOf(';'));
+        var bytes = Utilities.base64Decode(base64Data.substr(base64Data.indexOf('base64,') + 7));
+        var blob = Utilities.newBlob(bytes, contentType, "Resit_" + refCode + ".jpg");
+        var file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        receiptLink = file.getUrl();
+      } catch(err) {
+        receiptLink = "Resit Ada (Gagal Simpan Ke Drive: " + err.toString() + ")";
+      }
+    } else if (data.hasReceipt) {
+      receiptLink = "Resit Dimuat Naik Dalam Web";
+    }
+
+    // 2. LOGIK KIRAAN BAKI & STATUS BAYARAN
+    var isFullPaid = (status.indexOf("LUNAS") !== -1 || status.indexOf("PAID FULL") !== -1 || status.indexOf("FULL") !== -1);
+    var depositPaid = isFullPaid ? totalPrice : deposit;
+    var baki = isFullPaid ? 0 : Math.max(0, totalPrice - depositPaid);
+    
+    var depositProof = receiptLink;
+    var fullProof = isFullPaid ? (receiptLink !== "Tiada Resit" ? receiptLink : "Lunas (Bayaran Kaunter/Online)") : "Belum Lunas";
+    
+    // 3. KEMASKINI / TAMBAH BARIS DI SHEET 1
+    var sheet1Data = sheet1.getDataRange().getValues();
+    var rowIndex1 = -1;
+    for (var i = 1; i < sheet1Data.length; i++) {
+      if (String(sheet1Data[i][0]).trim() === refCode) {
+        rowIndex1 = i + 1;
         break;
       }
     }
     
-    if (rowIndex > 0) {
-      // Update existing row status
-      sheet.getRange(rowIndex, 13).setValue(data.status);
-      sheet.getRange(rowIndex, 15).setValue(new Date().toLocaleString('ms-MY'));
+    var rowData1 = [
+      refCode, date, name, phone, tableNo, pax, adults, children, seniors, time, totalPrice, depositPaid, status, notes, createdAt
+    ];
+    
+    if (rowIndex1 > 0) {
+      sheet1.getRange(rowIndex1, 1, 1, rowData1.length).setValues([rowData1]);
     } else {
-      // Append new reservation row
-      sheet.appendRow([
-        data.refCode,
-        data.dateStr,
-        data.customerName,
-        "'" + data.phone,
-        data.tableName || data.tableCode,
-        data.totalPax,
-        data.pax ? data.pax.dewasa : "-",
-        data.pax ? data.pax.kanak : "-",
-        data.pax ? data.pax.warga : "-",
-        data.arrivalTime || "6:30 PM",
-        data.totalAmount,
-        data.depositAmount,
-        data.status,
-        data.notes || "-",
-        new Date().toLocaleString('ms-MY')
-      ]);
+      sheet1.appendRow(rowData1);
+    }
+    
+    // 4. KEMASKINI / TAMBAH BARIS DI SHEET 2
+    var sheet2Data = sheet2.getDataRange().getValues();
+    var rowIndex2 = -1;
+    for (var j = 1; j < sheet2Data.length; j++) {
+      if (String(sheet2Data[j][1]).trim() === refCode) {
+        rowIndex2 = j + 1;
+        break;
+      }
+    }
+    
+    var rowData2 = [
+      name, refCode, phone, totalPrice, depositPaid, baki, status, depositProof, fullProof, new Date().toLocaleString()
+    ];
+    
+    if (rowIndex2 > 0) {
+      sheet2.getRange(rowIndex2, 1, 1, rowData2.length).setValues([rowData2]);
+    } else {
+      sheet2.appendRow(rowData2);
     }
     
     return ContentService.createTextOutput(JSON.stringify({"result": "success"}))
-                         .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({"result": "error", "error": err.toString()}))
-                         .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({"result": "error", "error": error.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }</pre>
                 </div>
 
                 <ol start="4" class="list-decimal pl-5 space-y-2 leading-relaxed pt-1">
-                    <li>Tekan butang <strong>Deploy (Luncurkan)</strong> ➔ <strong>New deployment (Peluncuran Baharu)</strong>.</li>
-                    <li>Pilih jenis: <strong>Web App</strong>.</li>
-                    <li>Pada tetapan <i>Who has access (Siapa mempunyai akses)</i>, pilih <strong>Anyone (Sesiapa Sahaja)</strong>.</li>
-                    <li>Tekan <strong>Deploy</strong>, luluskan kebenaran (<i>Authorize Access</i>), dan **Copy Web App URL**.</li>
-                    <li>Paste Web App URL tersebut di ruang **Google Apps Script Web App URL** dalam Panel Admin laman ini!</li>
+                    <li>Tekan <strong>Deploy</strong> ➔ <strong>New deployment</strong> ➔ Pilih <strong>Web App</strong>.</li>
+                    <li>Pada <i>Who has access</i>, pilih <strong>Anyone</strong>.</li>
+                    <li>Tekan <strong>Deploy</strong>, izinkan akses, dan Copy Web App URL ke Panel Admin.</li>
                 </ol>
             </div>
 
@@ -971,7 +1265,7 @@
         </div>
     </div>
 
-    <!-- MODAL 4: CUSTOM CONFIRM ACTION MODAL (Replaces confirm()) -->
+    <!-- MODAL 6: CUSTOM CONFIRM ACTION MODAL -->
     <div id="confirmActionModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card max-w-md w-full p-6 rounded-3xl border-2 border-gold space-y-4 text-center">
             <div id="confirmModalIcon" class="w-12 h-12 rounded-full bg-gold/20 text-gold flex items-center justify-center text-xl mx-auto border border-gold/40">
@@ -1013,7 +1307,7 @@
             </div>
 
             <p class="text-[10px] text-gray-500 pt-2">
-                © 2027 KJ Lab Coffee Banting. Tempahan Buffet Ramadan 2027 (1448H) dengan Admin Password Protection. Hak Cipta Terpelihara.
+                © 2027 KJ Lab Coffee Banting. Tempahan Buffet Ramadan 2027 (1448H) dengan Penjana Resit Invois Rasmi. Hak Cipta Terpelihara.
             </p>
         </div>
     </footer>
@@ -1023,7 +1317,7 @@
         const WHATSAPP_ADMIN_PHONE = "60123456789";
 
         // Global State Variables
-        let activeView = 'booking'; // 'booking', 'checkStatus', 'admin'
+        let activeView = 'booking';
         let selectedDateObj = null;
         let selectedTableObj = null;
         let activeAdminFilter = 'all';
@@ -1033,6 +1327,9 @@
             kanak: 0,
             warga: 0
         };
+
+        let currentActiveOfficialReceiptItem = null;
+        let currentActivePrebookModalItem = null;
 
         // Master List of Specific Tables at KJ Lab Coffee
         const tableMasterData = [
@@ -1052,7 +1349,7 @@
 
         // Generate 30 Days of Ramadan 2027 (8 Feb 2027 - 9 Mac 2027)
         const ramadanDates = [];
-        const startDate = new Date(2027, 1, 8); // Feb 8, 2027
+        const startDate = new Date(2027, 1, 8);
 
         for (let i = 1; i <= 30; i++) {
             const curr = new Date(startDate);
@@ -1085,10 +1382,11 @@
                 totalPax: 6,
                 totalAmount: 442,
                 depositAmount: 120,
-                status: 'PRE_BOOKED', // 'PRE_BOOKED', 'CONFIRMED', 'CANCELLED'
-                createdAt: Date.now() - (1 * 3600 * 1000), // Created 1 hr ago
-                timeRemainingSeconds: (5 * 3600), // 5 hrs left
-                notes: 'Mahu kerusi tinggi kanak-kanak'
+                status: 'PRE_BOOKED',
+                createdAt: Date.now() - (1 * 3600 * 1000),
+                timeRemainingSeconds: (5 * 3600),
+                notes: 'Mahu kerusi tinggi kanak-kanak',
+                receiptDataUrl: null
             },
             {
                 refCode: 'KJL-2027-1049',
@@ -1107,11 +1405,250 @@
                 status: 'CONFIRMED',
                 createdAt: Date.now() - (24 * 3600 * 1000),
                 timeRemainingSeconds: 0,
-                notes: 'Sambutan ulang tahun keluarga'
+                notes: 'Sambutan ulang tahun keluarga',
+                receiptDataUrl: null
             }
         ];
 
-        let currentActivePrebookModalItem = null;
+        function openWhatsAppUrlDirectly(url) {
+            try {
+                let win = window.open(url, '_blank');
+                if (!win || win.closed || typeof win.closed === 'undefined') {
+                    window.location.href = url;
+                }
+            } catch (e) {
+                window.location.href = url;
+            }
+        }
+
+        // FUNGSI UTAMA: Jana & Muat Turun Fail Invois PDF Automatik
+        function downloadReceiptPDF() {
+            const element = document.getElementById('printableReceiptArea');
+            if (!element) {
+                showToast('Gagal menemui elemen resit untuk dijana.', 'error');
+                return;
+            }
+
+            const refCode = currentActiveOfficialReceiptItem ? currentActiveOfficialReceiptItem.refCode : 'KJL-2027';
+            const custName = currentActiveOfficialReceiptItem ? currentActiveOfficialReceiptItem.customerName.replace(/\s+/g, '_') : 'Pelanggan';
+
+            showToast('Sedang menjana fail PDF invois rasmi...', 'info');
+
+            const opt = {
+                margin:       [0.3, 0.3, 0.3, 0.3],
+                filename:     `Invois_${refCode}_${custName}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast('Invois PDF berjaya dimuat turun!', 'success');
+            }).catch(err => {
+                console.error('PDF Generation Error:', err);
+                showToast('Gagal menjana PDF. Anda boleh menggunakan butang Cetak.', 'error');
+            });
+        }
+
+        function handleModalReceiptUpload(inputElem) {
+            const file = inputElem.files[0];
+            const previewBox = document.getElementById('modalReceiptStatusPreview');
+            const fileNameText = document.getElementById('modalReceiptFileName');
+
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Saiz fail resit terlalu besar (Maksimum 5MB).', 'error');
+                inputElem.value = '';
+                return;
+            }
+
+            if (previewBox && fileNameText) {
+                previewBox.classList.remove('hidden');
+                previewBox.classList.add('flex');
+                fileNameText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-gold mr-1"></i> Memproses fail resit...`;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                if (currentActivePrebookModalItem) {
+                    currentActivePrebookModalItem.receiptDataUrl = base64;
+                    const itemInArray = reservations.find(r => r.refCode === currentActivePrebookModalItem.refCode);
+                    if (itemInArray) itemInArray.receiptDataUrl = base64;
+                    
+                    saveReservations();
+                    syncToGoogleSheet(currentActivePrebookModalItem);
+
+                    if (previewBox && fileNameText) {
+                        fileNameText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Resit Berjaya Dimuat Naik: <strong>${file.name}</strong>`;
+                    }
+                    showToast('Resit bukti pembayaran berjaya dimuat naik!', 'success');
+                }
+            };
+            reader.onerror = function() {
+                if (previewBox && fileNameText) {
+                    fileNameText.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1"></i> Gagal membaca fail resit. Sila cuba lagi.`;
+                }
+                showToast('Gagal memproses fail resit.', 'error');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleStatusViewReceiptUpload(refCode, inputElem) {
+            const file = inputElem.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Saiz fail resit terlalu besar (Maksimum 5MB).', 'error');
+                inputElem.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                const item = reservations.find(r => r.refCode === refCode);
+                if (item) {
+                    item.receiptDataUrl = base64;
+                    saveReservations();
+                    syncToGoogleSheet(item);
+                    showToast(`Resit bagi tempahan [${refCode}] berjaya dikemaskini!`, 'success');
+                    searchBookingStatus();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkGasStatus() {
+            const savedUrl = localStorage.getItem('kjlab_gas_url');
+            const badge = document.getElementById('gasStatusBadge');
+            const input = document.getElementById('gasUrlInput');
+
+            if (input && savedUrl) input.value = savedUrl;
+
+            if (badge) {
+                if (savedUrl && savedUrl.startsWith('https://script.google.com/')) {
+                    badge.className = 'flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-1.5 rounded-full text-xs font-bold text-emerald-300';
+                    badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Terhubung ke Google Sheet</span>`;
+                } else {
+                    badge.className = 'flex items-center gap-2 bg-gray-800/80 border border-gray-600 px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-400';
+                    badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span><span>Belum Terhubung</span>`;
+                }
+            }
+        }
+
+        function saveGasUrl() {
+            const input = document.getElementById('gasUrlInput').value.trim();
+            if (!input) {
+                showToast('Sila masukkan URL Google Apps Script yang sah.', 'error');
+                return;
+            }
+
+            localStorage.setItem('kjlab_gas_url', input);
+            checkGasStatus();
+            showToast('Google Apps Script Web App URL berjaya disimpan!', 'success');
+        }
+
+        function syncToGoogleSheet(bookingData) {
+            const webAppUrl = localStorage.getItem('kjlab_gas_url');
+            if (!webAppUrl) return Promise.resolve(false);
+
+            const totalAmount = bookingData.totalAmount || bookingData.totalPrice || 0;
+            const depositAmount = bookingData.depositAmount || bookingData.deposit || 0;
+            const isPaidFull = bookingData.status === 'PAID_FULL';
+            const balanceDue = isPaidFull ? 0 : Math.max(0, totalAmount - depositAmount);
+
+            const payload = {
+                refCode: bookingData.refCode || "",
+                date: bookingData.dateStr || bookingData.date || "",
+                dateStr: bookingData.dateStr || bookingData.date || "",
+                name: bookingData.customerName || bookingData.name || "",
+                customerName: bookingData.customerName || bookingData.name || "",
+                phone: bookingData.phone || "",
+                tableNo: bookingData.tableName || bookingData.tableCode || bookingData.tableNo || "",
+                tableName: bookingData.tableName || bookingData.tableCode || bookingData.tableNo || "",
+                pax: bookingData.totalPax || bookingData.pax || 0,
+                totalPax: bookingData.totalPax || 0,
+                dewasa: (bookingData.pax && bookingData.pax.dewasa !== undefined) ? bookingData.pax.dewasa : (bookingData.dewasa || bookingData.adults || 0),
+                adults: (bookingData.pax && bookingData.pax.dewasa !== undefined) ? bookingData.pax.dewasa : (bookingData.dewasa || bookingData.adults || 0),
+                kanak: (bookingData.pax && bookingData.pax.kanak !== undefined) ? bookingData.pax.kanak : (bookingData.kanak || bookingData.children || 0),
+                children: (bookingData.pax && bookingData.pax.kanak !== undefined) ? bookingData.pax.kanak : (bookingData.kanak || bookingData.children || 0),
+                warga: (bookingData.pax && bookingData.pax.warga !== undefined) ? bookingData.pax.warga : (bookingData.warga || bookingData.seniors || 0),
+                seniors: (bookingData.pax && bookingData.pax.warga !== undefined) ? bookingData.pax.warga : (bookingData.warga || bookingData.seniors || 0),
+                time: bookingData.arrivalTime || bookingData.time || "6:30 PM",
+                arrivalTime: bookingData.arrivalTime || bookingData.time || "6:30 PM",
+                totalPrice: totalAmount,
+                totalAmount: totalAmount,
+                deposit: depositAmount,
+                depositAmount: depositAmount,
+                balanceDue: balanceDue,
+                status: bookingData.status || "PRE_BOOKED",
+                hasReceipt: !!bookingData.receiptDataUrl,
+                receiptBase64: bookingData.receiptDataUrl || null,
+                notes: bookingData.notes || "",
+                createdAt: bookingData.createdAt ? new Date(bookingData.createdAt).toLocaleString('ms-MY') : new Date().toLocaleString('ms-MY')
+            };
+
+            return fetch(webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                showToast(`Data [${payload.refCode}] disinkronkan ke Google Sheets!`, 'success');
+                return true;
+            }).catch((err) => {
+                console.error('GAS Sync Error:', err);
+                showToast(`Gagal menyinkronkan [${payload.refCode}] ke Google Sheet`, 'error');
+                return false;
+            });
+        }
+
+        async function testGasConnection() {
+            const savedUrl = localStorage.getItem('kjlab_gas_url');
+            if (!savedUrl) {
+                showToast('Sila simpan Google Apps Script Web App URL terlebih dahulu.', 'warning');
+                return;
+            }
+
+            const testData = {
+                refCode: `TEST-${Math.floor(1000 + Math.random() * 9000)}`,
+                customerName: 'Ahmad Ujian Google Sheet',
+                phone: '0123456789',
+                dateStr: 'Hari 1 Ramadan 2027 (8 Feb 2027)',
+                tableName: 'Meja A01 (2 Pax)',
+                totalPax: 2,
+                pax: { dewasa: 2, kanak: 0, warga: 0 },
+                totalAmount: 176,
+                depositAmount: 40,
+                arrivalTime: '6:30 PM',
+                status: 'PRE_BOOKED',
+                notes: 'Ujian Sambungan System'
+            };
+
+            showToast('Menghantar data ujian ke Google Sheet...', 'info');
+            syncToGoogleSheet(testData);
+        }
+
+        async function manualSyncAllToSheet() {
+            const savedUrl = localStorage.getItem('kjlab_gas_url');
+            if (!savedUrl) {
+                showToast('Sila simpan Google Apps Script Web App URL terlebih dahulu.', 'warning');
+                return;
+            }
+
+            if (reservations.length === 0) {
+                showToast('Tiada rekod tempahan untuk disinkronkan.', 'info');
+                return;
+            }
+
+            showToast(`Memulakan senarai sync untuk ${reservations.length} tempahan...`, 'info');
+            for (const item of reservations) {
+                syncToGoogleSheet(item);
+            }
+            showToast('Proses manual sync ke Google Sheet dimulakan!', 'success');
+        }
 
         function getStoredAdminPassword() {
             return localStorage.getItem('kjlab_admin_pass') || 'admin123';
@@ -1186,16 +1723,12 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderCalendar();
-            
-            // Auto select 1st Ramadan Date
             selectDate(1);
-            
             renderTableGrid();
             calculateSummary();
             updateAdminDashboard();
             checkGasStatus();
 
-            // Real-time 1-second countdown loop for 6-hour timers
             setInterval(updateAllTimers, 1000);
         });
 
@@ -1263,101 +1796,6 @@
             cancelBtn.addEventListener('click', handleCancel);
 
             modal.classList.remove('hidden');
-        }
-
-        function saveGasUrl() {
-            const input = document.getElementById('gasUrlInput').value.trim();
-            if (!input) {
-                showToast('Sila masukkan URL Google Apps Script yang sah.', 'error');
-                return;
-            }
-
-            localStorage.setItem('kjlab_gas_url', input);
-            checkGasStatus();
-            showToast('Google Apps Script Web App URL berjaya disimpan!', 'success');
-        }
-
-        function checkGasStatus() {
-            const savedUrl = localStorage.getItem('kjlab_gas_url');
-            const badge = document.getElementById('gasStatusBadge');
-            const input = document.getElementById('gasUrlInput');
-
-            if (input && savedUrl) input.value = savedUrl;
-
-            if (badge) {
-                if (savedUrl && savedUrl.startsWith('https://script.google.com/')) {
-                    badge.className = 'flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-1.5 rounded-full text-xs font-bold text-emerald-300';
-                    badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Terhubung ke Google Sheet</span>`;
-                } else {
-                    badge.className = 'flex items-center gap-2 bg-gray-800/80 border border-gray-600 px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-400';
-                    badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span><span>Belum Terhubung</span>`;
-                }
-            }
-        }
-
-        async function syncToGoogleSheet(bookingData) {
-            const webAppUrl = localStorage.getItem('kjlab_gas_url');
-            if (!webAppUrl) return false;
-
-            try {
-                await fetch(webAppUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bookingData)
-                });
-                showToast(`Data [${bookingData.refCode}] disinkronkan ke Google Sheet!`, 'success');
-                return true;
-            } catch (err) {
-                console.error('GAS Sync Error:', err);
-                showToast(`Gagal menyinkronkan [${bookingData.refCode}] ke Google Sheet`, 'error');
-                return false;
-            }
-        }
-
-        async function testGasConnection() {
-            const savedUrl = localStorage.getItem('kjlab_gas_url');
-            if (!savedUrl) {
-                showToast('Sila simpan Google Apps Script Web App URL terlebih dahulu.', 'warning');
-                return;
-            }
-
-            const testData = {
-                refCode: `TEST-${Math.floor(1000 + Math.random() * 9000)}`,
-                customerName: 'Ahmad Ujian Google Sheet',
-                phone: '0123456789',
-                dateStr: 'Hari 1 Ramadan 2027 (8 Feb 2027)',
-                tableName: 'Meja A01 (2 Pax)',
-                totalPax: 2,
-                pax: { dewasa: 2, kanak: 0, warga: 0 },
-                totalAmount: 176,
-                depositAmount: 40,
-                arrivalTime: '6:30 PM',
-                status: 'PRE_BOOKED',
-                notes: 'Ujian Sambungan System'
-            };
-
-            showToast('Menghantar data ujian ke Google Sheet...', 'info');
-            await syncToGoogleSheet(testData);
-        }
-
-        async function manualSyncAllToSheet() {
-            const savedUrl = localStorage.getItem('kjlab_gas_url');
-            if (!savedUrl) {
-                showToast('Sila simpan Google Apps Script Web App URL terlebih dahulu.', 'warning');
-                return;
-            }
-
-            if (reservations.length === 0) {
-                showToast('Tiada rekod tempahan untuk disinkronkan.', 'info');
-                return;
-            }
-
-            showToast(`Memulakan senarai sync untuk ${reservations.length} tempahan...`, 'info');
-            for (const item of reservations) {
-                await syncToGoogleSheet(item);
-            }
-            showToast('Proses manual sync ke Google Sheet selesai!', 'success');
         }
 
         function openGasGuideModal() {
@@ -1629,34 +2067,51 @@
             document.getElementById('sumDepositVal').innerText = `RM ${depositRequired.toFixed(2)}`;
         }
 
-        async function handlePreBookSubmission() {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const time = document.getElementById('custTime').value;
-            const notes = document.getElementById('custNotes').value.trim();
+        function handlePreBookSubmission() {
+            const nameInput = document.getElementById('custName');
+            const phoneInput = document.getElementById('custPhone');
+            const timeInput = document.getElementById('custTime');
+            const notesInput = document.getElementById('custNotes');
+
+            const name = nameInput ? nameInput.value.trim() : '';
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+            const time = timeInput ? timeInput.value : '6:30 PM';
+            const notes = notesInput ? notesInput.value.trim() : '';
 
             const errBox = document.getElementById('bookingFormError');
             const errTxt = document.getElementById('bookingFormErrorText');
 
             if (!selectedDateObj) {
-                errTxt.innerText = "Sila pilih Tarikh Ramadan 2027 terlebih dahulu.";
-                errBox.classList.remove('hidden');
+                if (errTxt) errTxt.innerText = "Sila pilih Tarikh Ramadan 2027 terlebih dahulu.";
+                if (errBox) errBox.classList.remove('hidden');
+                showToast("Sila pilih Tarikh Ramadan 2027 terlebih dahulu.", "warning");
                 return;
             }
 
             if (!selectedTableObj) {
-                errTxt.innerText = "Sila pilih No. Meja yang tersedia.";
-                errBox.classList.remove('hidden');
+                if (errTxt) errTxt.innerText = "Sila pilih No. Meja yang tersedia untuk jumlah pax anda.";
+                if (errBox) errBox.classList.remove('hidden');
+                showToast("Sila pilih No. Meja yang tersedia.", "warning");
                 return;
             }
 
-            if (!name || !phone) {
-                errTxt.innerText = "Sila isi Nama Penuh dan No. WhatsApp anda.";
-                errBox.classList.remove('hidden');
+            if (!name) {
+                if (errTxt) errTxt.innerText = "Sila isi Nama Penuh anda.";
+                if (errBox) errBox.classList.remove('hidden');
+                showToast("Sila masukkan Nama Penuh anda.", "warning");
+                if (nameInput) nameInput.focus();
                 return;
             }
 
-            errBox.classList.add('hidden');
+            if (!phone) {
+                if (errTxt) errTxt.innerText = "Sila isi Nombor WhatsApp anda.";
+                if (errBox) errBox.classList.remove('hidden');
+                showToast("Sila masukkan Nombor WhatsApp anda.", "warning");
+                if (phoneInput) phoneInput.focus();
+                return;
+            }
+
+            if (errBox) errBox.classList.add('hidden');
 
             const totalPax = getTotalPax();
             const subtotal = (paxState.dewasa * 88) + (paxState.kanak * 45) + (paxState.warga * 60);
@@ -1682,17 +2137,22 @@
                 depositAmount: depositRequired,
                 status: 'PRE_BOOKED',
                 createdAt: Date.now(),
-                timeRemainingSeconds: 6 * 3600, // 6 Hours Countdown
-                notes: notes
+                timeRemainingSeconds: 6 * 3600,
+                notes: notes,
+                receiptDataUrl: null
             };
 
             reservations.unshift(newReservation);
             saveReservations();
 
-            // Trigger Realtime Sync to Google Sheet
-            syncToGoogleSheet(newReservation);
+            try {
+                syncToGoogleSheet(newReservation);
+            } catch(e) {
+                console.error("Sync error:", e);
+            }
 
             showToast('Permohonan Pre-Book berjaya dibuat!', 'success');
+            currentActivePrebookModalItem = newReservation;
             showPrebookModal(newReservation);
         }
 
@@ -1705,6 +2165,21 @@
             document.getElementById('modalPaxVal').innerText = `${item.totalPax} Pax`;
             document.getElementById('modalTotalVal').innerText = `RM ${item.totalAmount.toFixed(2)}`;
             document.getElementById('modalDepositVal').innerText = `RM ${item.depositAmount.toFixed(2)}`;
+
+            const modalInput = document.getElementById('modalReceiptInput');
+            if (modalInput) modalInput.value = '';
+            
+            const previewBox = document.getElementById('modalReceiptStatusPreview');
+            const fileNameText = document.getElementById('modalReceiptFileName');
+            if (item.receiptDataUrl) {
+                if (previewBox && fileNameText) {
+                    previewBox.classList.remove('hidden');
+                    previewBox.classList.add('flex');
+                    fileNameText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Resit telah dimuat naik.`;
+                }
+            } else {
+                if (previewBox) previewBox.classList.add('hidden');
+            }
 
             document.getElementById('prebookModal').classList.remove('hidden');
         }
@@ -1726,22 +2201,30 @@
             if (!currentActivePrebookModalItem) return;
             const item = currentActivePrebookModalItem;
 
-            let msg = `*PERMOHONAN PRE-BOOK BUFFET RAMADAN 2027 — KJ LAB COFFEE*\n`;
-            msg += `------------------------------------------\n`;
-            msg += `*Kod Rujukan:* ${item.refCode}\n`;
-            msg += `*Nama Pemohon:* ${item.customerName}\n`;
-            msg += `*No. Tel:* ${item.phone}\n`;
-            msg += `*Tarikh Ramadan:* ${item.dateStr}\n`;
-            msg += `*No. Meja:* ${item.tableName || item.tableCode}\n`;
-            msg += `*Jumlah Pax:* ${item.totalPax} Pax\n`;
-            msg += `*Jumlah Bayaran:* RM ${item.totalAmount.toFixed(2)}\n`;
-            msg += `*DEPOSIT PERLU DIBAYAR:* RM ${item.depositAmount.toFixed(2)}\n`;
-            msg += `------------------------------------------\n`;
-            msg += `*Baki Masa Hold Meja:* 6 Jam dari sekarang\n`;
-            msg += `\n*Salam Admin KJ Lab Coffee, ini adalah resit/bukti bayaran deposit saya untuk pengesahan slot. Terima kasih!*`;
+            try {
+                let hasReceiptText = item.receiptDataUrl ? "[Resit Berjaya Dimuat Naik Di Web]" : "[Belum Dimuat Naik]";
 
-            const url = `https://wa.me/${WHATSAPP_ADMIN_PHONE}?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+                let msg = `*PERMOHONAN PRE-BOOK BUFFET RAMADAN 2027 — KJ LAB COFFEE*\n`;
+                msg += `------------------------------------------\n`;
+                msg += `*Kod Rujukan:* ${item.refCode}\n`;
+                msg += `*Nama Pemohon:* ${item.customerName}\n`;
+                msg += `*No. Tel:* ${item.phone}\n`;
+                msg += `*Tarikh Ramadan:* ${item.dateStr}\n`;
+                msg += `*No. Meja:* ${item.tableName || item.tableCode}\n`;
+                msg += `*Jumlah Pax:* ${item.totalPax} Pax\n`;
+                msg += `*Jumlah Bayaran:* RM ${item.totalAmount.toFixed(2)}\n`;
+                msg += `*DEPOSIT PERLU DIBAYAR:* RM ${item.depositAmount.toFixed(2)}\n`;
+                msg += `*Status Resit:* ${hasReceiptText}\n`;
+                msg += `------------------------------------------\n`;
+                msg += `*Baki Masa Hold Meja:* 6 Jam dari skrg\n\n`;
+                msg += `*Salam Admin KJ Lab Coffee, ini adalah permohonan tempahan pre-book saya. Terima kasih!*`;
+
+                const url = `https://wa.me/${WHATSAPP_ADMIN_PHONE}?text=${encodeURIComponent(msg)}`;
+                openWhatsAppUrlDirectly(url);
+            } catch (err) {
+                console.error("WhatsApp URL error:", err);
+                showToast("Gagal membuka tetingkap WhatsApp. Sila cuba lagi.", "error");
+            }
         }
 
         function updateAllTimers() {
@@ -1820,15 +2303,24 @@
                     </div>
                 `;
             } else if (match.status === 'CONFIRMED') {
-                statusBadge = `<span class="badge-confirmed font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> DISAHKAN (CONFIRMED)</span>`;
+                statusBadge = `<span class="badge-confirmed font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> DISAHKAN (DEPOSIT CONFIRMED)</span>`;
                 timerInfo = `
                     <div class="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center text-emerald-300 text-xs font-bold">
                         <i class="fa-solid fa-square-check text-emerald-400 mr-1"></i> Deposit Diterima. Slot Meja Anda Telah Selamat Disahkan!
                     </div>
                 `;
+            } else if (match.status === 'PAID_FULL') {
+                statusBadge = `<span class="badge-paidfull font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-file-circle-check"></i> LUNAS SEPENUHNYA (PAID FULL)</span>`;
+                timerInfo = `
+                    <div class="mt-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-center text-blue-300 text-xs font-bold">
+                        <i class="fa-solid fa-award text-blue-400 mr-1"></i> Pembayaran Penuh Diterima. Jumpa anda pada hari kejadian!
+                    </div>
+                `;
             } else {
                 statusBadge = `<span class="badge-cancelled font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-ban"></i> DIBATALKAN / MASA TAMAT</span>`;
             }
+
+            const hasReceipt = !!match.receiptDataUrl;
 
             container.innerHTML = `
                 <div class="glass-card p-6 rounded-3xl space-y-4 border-2 border-gold/40">
@@ -1867,7 +2359,35 @@
                         </div>
                     </div>
 
+                    <!-- Status Upload Resit -->
+                    <div class="p-3.5 rounded-2xl ${hasReceipt ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'} border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid ${hasReceipt ? 'fa-circle-check text-emerald-400' : 'fa-circle-exclamation text-amber-400'} text-base"></i>
+                            <div>
+                                <span class="font-bold text-white block">Status Resit Bukti Bayaran:</span>
+                                <span class="${hasReceipt ? 'text-emerald-300' : 'text-amber-300'} font-medium">
+                                    ${hasReceipt ? '🟢 Resit Berjaya Dimuat Naik' : '⚪ Belum Muat Naik Resit'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="btn-gold px-4 py-2 rounded-xl font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-upload"></i>
+                                <span>${hasReceipt ? 'Tukar / Muat Naik Resit Baharu' : 'Muat Naik Resit Sekarang'}</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="handleStatusViewReceiptUpload('${match.refCode}', this)">
+                            </label>
+                        </div>
+                    </div>
+
                     ${timerInfo}
+
+                    ${(match.status === 'CONFIRMED' || match.status === 'PAID_FULL') ? `
+                        <button onclick="generateOfficialPrintableReceipt('${match.refCode}')" class="w-full btn-gold font-bold py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2 mt-2 shadow">
+                            <i class="fa-solid fa-file-invoice-dollar text-base"></i>
+                            <span>📄 Papar & Cetak Resit Rasmi (Invois PDF)</span>
+                        </button>
+                    ` : ''}
 
                     ${match.status === 'PRE_BOOKED' ? `
                         <button onclick="currentActivePrebookModalItem = reservations.find(r => r.refCode === '${match.refCode}'); openWhatsAppForDeposit()" class="w-full btn-gold font-bold py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2 mt-2">
@@ -1888,12 +2408,12 @@
             const total = reservations.length;
             const prebook = reservations.filter(r => r.status === 'PRE_BOOKED').length;
             const confirmed = reservations.filter(r => r.status === 'CONFIRMED').length;
-            const totalDeposit = reservations.filter(r => r.status === 'CONFIRMED').reduce((acc, r) => acc + r.depositAmount, 0);
+            const paidfull = reservations.filter(r => r.status === 'PAID_FULL').length;
 
             document.getElementById('adminStatTotal').innerText = total;
             document.getElementById('adminStatPrebook').innerText = prebook;
             document.getElementById('adminStatConfirmed').innerText = confirmed;
-            document.getElementById('adminStatDeposit').innerText = `RM ${totalDeposit.toFixed(0)}`;
+            document.getElementById('adminStatPaidFull').innerText = paidfull;
             document.getElementById('adminPendingBadge').innerText = prebook;
 
             const tbody = document.getElementById('adminTableBody');
@@ -1915,18 +2435,18 @@
 
             filtered.forEach(r => {
                 let statusBadge = '';
-                let timerCell = '';
 
                 if (r.status === 'PRE_BOOKED') {
                     statusBadge = `<span class="badge-prebook font-bold px-2 py-0.5 rounded text-[10px]">PRE-BOOKED</span>`;
-                    timerCell = `<span class="font-mono text-amber-400 font-bold block admin-timer-${r.refCode}">${formatSecondsToHMS(r.timeRemainingSeconds)}</span>`;
                 } else if (r.status === 'CONFIRMED') {
-                    statusBadge = `<span class="badge-confirmed font-bold px-2 py-0.5 rounded text-[10px]">CONFIRMED</span>`;
-                    timerCell = `<span class="text-emerald-400 text-[10px]">Lunas Deposit</span>`;
+                    statusBadge = `<span class="badge-confirmed font-bold px-2 py-0.5 rounded text-[10px]">DEPOSIT CONFIRMED</span>`;
+                } else if (r.status === 'PAID_FULL') {
+                    statusBadge = `<span class="badge-paidfull font-bold px-2 py-0.5 rounded text-[10px]">PAID FULL / LUNAS</span>`;
                 } else {
                     statusBadge = `<span class="badge-cancelled font-bold px-2 py-0.5 rounded text-[10px]">CANCELLED</span>`;
-                    timerCell = `<span class="text-rose-400 text-[10px]">Tamat/Batal</span>`;
                 }
+
+                const hasReceipt = !!r.receiptDataUrl;
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-emeraldDark/40 transition-all";
@@ -1948,16 +2468,36 @@
                     </td>
                     <td class="p-3">
                         ${statusBadge}
-                        ${timerCell}
+                        <div class="mt-1">
+                            ${hasReceipt ? `
+                                <button onclick="openAdminReceiptModal('${r.refCode}')" class="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-[10px] hover:bg-emerald-500 hover:text-emeraldDark transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-camera"></i> Lihat Resit
+                                </button>
+                            ` : `
+                                <span class="text-gray-500 text-[10px] italic">⚪ Tiada Resit</span>
+                            `}
+                        </div>
                     </td>
                     <td class="p-3 text-right space-y-1">
                         ${r.status === 'PRE_BOOKED' ? `
                             <button onclick="adminConfirmBooking('${r.refCode}')" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-emerald-950 font-extrabold hover:bg-emerald-400 transition-all text-[10px] block w-full">
-                                <i class="fa-solid fa-check mr-1"></i> Sahkan & Confirm
+                                <i class="fa-solid fa-check mr-1"></i> Sahkan Deposit
+                            </button>
+                        ` : ''}
+
+                        ${r.status === 'CONFIRMED' ? `
+                            <button onclick="adminMarkPaidFull('${r.refCode}')" class="px-2.5 py-1 rounded-lg bg-blue-500 text-white font-extrabold hover:bg-blue-400 transition-all text-[10px] block w-full">
+                                <i class="fa-solid fa-circle-dollar-to-slot mr-1"></i> Sahkan Bayaran Penuh
+                            </button>
+                        ` : ''}
+
+                        ${(r.status === 'CONFIRMED' || r.status === 'PAID_FULL') ? `
+                            <button onclick="generateOfficialPrintableReceipt('${r.refCode}')" class="px-2.5 py-1 rounded-lg bg-gold/20 border border-gold/40 text-gold font-bold hover:bg-gold hover:text-emeraldDark transition-all text-[10px] block w-full">
+                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i> 📄 Jana Resit Rasmi
                             </button>
                         ` : ''}
                         
-                        <button onclick="sendAdminWhatsAppNotification('${r.refCode}')" class="px-2.5 py-1 rounded-lg bg-gold/20 border border-gold/40 text-gold font-bold hover:bg-gold hover:text-emeraldDark transition-all text-[10px] block w-full">
+                        <button onclick="sendAdminWhatsAppNotification('${r.refCode}')" class="px-2.5 py-1 rounded-lg bg-emeraldDark border border-gold/30 text-gold font-bold hover:bg-gold hover:text-emeraldDark transition-all text-[10px] block w-full">
                             <i class="fa-brands fa-whatsapp mr-1"></i> WA Pengesahan
                         </button>
 
@@ -1981,6 +2521,134 @@
             });
         }
 
+        function openAdminReceiptModal(refCode) {
+            const item = reservations.find(r => r.refCode === refCode);
+            if (!item || !item.receiptDataUrl) {
+                showToast('Tiada gambar resit untuk tempahan ini.', 'warning');
+                return;
+            }
+
+            const imgPreview = document.getElementById('adminReceiptImgPreview');
+            const infoText = document.getElementById('adminReceiptInfoText');
+            const downloadBtn = document.getElementById('adminReceiptDownloadBtn');
+
+            imgPreview.src = item.receiptDataUrl;
+            infoText.innerText = `Resit Tempahan [${item.refCode}] - ${item.customerName}`;
+            
+            downloadBtn.href = item.receiptDataUrl;
+            downloadBtn.download = `Resit_${item.refCode}_${item.customerName.replace(/\s+/g, '_')}.jpg`;
+
+            document.getElementById('adminReceiptViewModal').classList.remove('hidden');
+        }
+
+        function closeAdminReceiptModal() {
+            document.getElementById('adminReceiptViewModal').classList.add('hidden');
+        }
+
+        function generateOfficialPrintableReceipt(refCode) {
+            const item = reservations.find(r => r.refCode === refCode);
+            if (!item) return;
+
+            currentActiveOfficialReceiptItem = item;
+
+            // Receipt Header & Ref Numbers
+            document.getElementById('rcptInvoiceNo').innerText = `INV-${item.refCode}`;
+            document.getElementById('rcptRefCode').innerText = item.refCode;
+            document.getElementById('rcptIssueDate').innerText = new Date(item.createdAt).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('rcptPrintTimestamp').innerText = new Date().toLocaleString('ms-MY');
+
+            // Status Badge text
+            const badgeElem = document.getElementById('rcptStatusBadge');
+            if (item.status === 'PAID_FULL') {
+                badgeElem.className = "inline-block bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mb-1";
+                badgeElem.innerText = "LUNAS SEPENUHNYA (PAID FULL)";
+            } else {
+                badgeElem.className = "inline-block bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mb-1";
+                badgeElem.innerText = "DEPOSIT DISAHKAN";
+            }
+
+            // Customer details
+            document.getElementById('rcptCustName').innerText = item.customerName;
+            document.getElementById('rcptCustPhone').innerText = item.phone;
+            document.getElementById('rcptRamadanDate').innerText = item.dateStr;
+            document.getElementById('rcptTableNo').innerText = item.tableName || item.tableCode;
+            document.getElementById('rcptArrivalTime').innerText = item.arrivalTime || '6:30 PM';
+
+            // Detailed Itemization Table
+            const tbody = document.getElementById('rcptTableItemsBody');
+            tbody.innerHTML = '';
+
+            const adults = item.pax ? item.pax.dewasa : 0;
+            const children = item.pax ? item.pax.kanak : 0;
+            const seniors = item.pax ? item.pax.warga : 0;
+
+            if (adults > 0) {
+                const adultTotal = adults * 88;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 font-medium">Buffet Ramadan (Dewasa)</td>
+                        <td class="p-2.5 text-center">${adults}</td>
+                        <td class="p-2.5 text-right">RM 88.00</td>
+                        <td class="p-2.5 text-right font-bold">RM ${adultTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            if (children > 0) {
+                const childTotal = children * 45;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 font-medium">Buffet Ramadan (Kanak-Kanak)</td>
+                        <td class="p-2.5 text-center">${children}</td>
+                        <td class="p-2.5 text-right">RM 45.00</td>
+                        <td class="p-2.5 text-right font-bold">RM ${childTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            if (seniors > 0) {
+                const seniorTotal = seniors * 60;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 font-medium">Buffet Ramadan (Warga Emas)</td>
+                        <td class="p-2.5 text-center">${seniors}</td>
+                        <td class="p-2.5 text-right">RM 60.00</td>
+                        <td class="p-2.5 text-right font-bold">RM ${seniorTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            if (item.totalPax >= 10) {
+                const subtotal = (adults * 88) + (children * 45) + (seniors * 60);
+                const discount = subtotal * 0.10;
+                tbody.innerHTML += `
+                    <tr class="text-emerald-700 bg-emerald-50/50">
+                        <td class="p-2.5 font-bold" colspan="3">Diskaun Kumpulan (10% daripada RM${subtotal.toFixed(2)})</td>
+                        <td class="p-2.5 text-right font-bold">- RM ${discount.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            // Totals Summary
+            document.getElementById('rcptGrandTotal').innerText = `RM ${item.totalAmount.toFixed(2)}`;
+            document.getElementById('rcptDepositPaid').innerText = `- RM ${item.depositAmount.toFixed(2)}`;
+
+            const balanceDue = item.status === 'PAID_FULL' ? 0 : (item.totalAmount - item.depositAmount);
+            document.getElementById('rcptBalanceDue').innerText = item.status === 'PAID_FULL' ? 'LUNAS' : `RM ${balanceDue.toFixed(2)}`;
+
+            document.getElementById('officialReceiptModal').classList.remove('hidden');
+        }
+
+        function closeOfficialReceiptModal() {
+            document.getElementById('officialReceiptModal').classList.add('hidden');
+        }
+
+        function shareOfficialReceiptWhatsApp() {
+            if (!currentActiveOfficialReceiptItem) return;
+            sendAdminWhatsAppNotification(currentActiveOfficialReceiptItem.refCode);
+        }
+
+        // KEMASKINI: Auto jana & buka modal invois sebaik sahaja Admin tekan "Sahkan Deposit"
         function adminConfirmBooking(refCode) {
             const item = reservations.find(r => r.refCode === refCode);
             if (!item) return;
@@ -1997,7 +2665,29 @@
                     syncToGoogleSheet(item);
 
                     showToast(`Tempahan [${refCode}] berjaya disahkan & dikemaskini dalam Google Sheet!`, 'success');
-                    sendAdminWhatsAppNotification(refCode);
+                    
+                    // Terus paparkan modal Invois/Resit Rasmi untuk dicetak atau dimuat turun PDF
+                    generateOfficialPrintableReceipt(refCode);
+                }
+            );
+        }
+
+        function adminMarkPaidFull(refCode) {
+            const item = reservations.find(r => r.refCode === refCode);
+            if (!item) return;
+
+            showConfirmModal(
+                'Pengesahan Bayaran Penuh (Lunas)',
+                `Adakah anda pasti mahu menukar status tempahan [${refCode} - ${item.customerName}] kepada LUNAS SEPENUHNYA?`,
+                () => {
+                    item.status = 'PAID_FULL';
+                    saveReservations();
+                    renderTableGrid();
+
+                    syncToGoogleSheet(item);
+
+                    showToast(`Tempahan [${refCode}] kini LUNAS SEPENUHNYA!`, 'success');
+                    generateOfficialPrintableReceipt(refCode);
                 }
             );
         }
@@ -2028,24 +2718,37 @@
             const clientPhone = item.phone.replace(/[^0-9]/g, '');
             const formattedPhone = clientPhone.startsWith('0') ? '6' + clientPhone : clientPhone;
 
-            let msg = `*PENGESAHAN RASMI TEMPAHAN BUFFET RAMADAN 2027 — KJ LAB COFFEE*\n`;
+            let statusTxt = item.status === 'PAID_FULL' ? '✅ *LUNAS SEPENUHNYA (PAID FULL)*' : '✅ *CONFIRMED BOOKING (DEPOSIT DISAHKAN)*';
+
+            let msg = `*RESIT / PENGESAHAN RASMI TEMPAHAN BUFFET RAMADAN 2027 — KJ LAB COFFEE*\n`;
             msg += `------------------------------------------\n`;
-            msg += `*Status:* ✅ *CONFIRMED BOOKING (BAYARAN DISAHKAN)*\n`;
-            msg += `*Kod Rujukan:* ${item.refCode}\n`;
+            msg += `*No. Invois:* INV-${item.refCode}\n`;
+            msg += `*Status:* ${statusTxt}\n`;
             msg += `*Nama Pelanggan:* ${item.customerName}\n`;
             msg += `*Tarikh Ramadan 2027:* ${item.dateStr}\n`;
             msg += `*No. Meja Ditetapkan:* ${item.tableName || item.tableCode}\n`;
             msg += `*Jumlah Tetamu:* ${item.totalPax} Pax\n`;
             msg += `*Masa Ketibaan:* ${item.arrivalTime || '6:30 PM'}\n`;
+            msg += `*Jumlah Bayaran:* RM ${item.totalAmount.toFixed(2)}\n`;
+            msg += `*Deposit Dibayar:* RM ${item.depositAmount.toFixed(2)}\n`;
+            
+            if (item.status === 'PAID_FULL') {
+                msg += `*Baki Perlu Dijelaskan:* RM 0.00 (LUNAS)\n`;
+            } else {
+                msg += `*Baki Dijelaskan Semasa Ketibaan:* RM ${(item.totalAmount - item.depositAmount).toFixed(2)}\n`;
+            }
+
             msg += `------------------------------------------\n`;
-            msg += `*TAHNIAH!* Pembayaran deposit anda telah kami terima dan slot meja anda secara rasmi telah disahkan.\n\n`;
-            msg += `Sila tunjukkan mesej pengesahan ini atau Kod Ref *${item.refCode}* di kaunter pendaftaran semasa ketibaan.\n\n`;
+            msg += `*TAHNIAH!* Pembayaran anda telah kami terima dan slot meja anda secara rasmi telah disahkan.\n\n`;
+            msg += `Sila tunjukkan mesej resit pengesahan ini atau Kod Ref *${item.refCode}* di kaunter pendaftaran semasa ketibaan.\n\n`;
             msg += `*Lokasi:* KJ Lab Coffee, Banting, Selangor.\n`;
             msg += `Jumpa anda di sana! Selamat Berpuasa. 🌙☕`;
 
             const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+            openWhatsAppUrlDirectly(url);
         }
     </script>
 </body>
 </html>
+
+
